@@ -18,8 +18,6 @@ contract NFTMarketplace is ERC721URIStorage{
 
     address payable owner;
 
-    mapping(uint256 => MarketItem ) private idMarketItem;
-
     struct MarketItem{
         uint256 tokenIds;
         address payable seller;
@@ -27,6 +25,8 @@ contract NFTMarketplace is ERC721URIStorage{
         uint256 price;
         bool sold;
     }
+    mapping(uint256 => MarketItem ) private idMarketItem;
+
     modifier  onlyOwner {
         require(
             msg.sender==owner ,
@@ -59,6 +59,46 @@ contract NFTMarketplace is ERC721URIStorage{
     function getListingPrice() public view returns(uint256){
         return listingPrice;
     }
+
+    //create NFT token function
+
+    function createToken(
+        string memory tokenURL,
+        uint256 price
+        ) 
+        public
+        payable
+        returns(uint256)
+           {
+        _tokenIds.increment();
+        uint256 newTokenId = _tokenIds.current();
+
+        _mint(msg.sender,newTokenId);
+        _setTokenURL(newTokenId,tokenURL);
+
+        createMarketItem(newTokenId,price);
+
+        return newTokenId;
+    }
+
+    function createMarketItem(uint256 tokenId, uint256 price) private{
+        require(price >0 ,"price must be atleast one");
+        require(msg.value == listingPrice, "price must be equal to listing price");
+
+        idMarketItem[tokenId] = MarketItem(
+            tokenId,
+            payable(msg.sender),
+            payable(address(this)),
+            price,
+            false
+        );
+
+        _transfer(msg.sender,address(this),tokenId);
+
+        emit idMarketItemCreated(tokenId,msg.sender,address(this),price,false);
+    }
+
+    //Function for Resale Token
 
 
 } 
